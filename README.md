@@ -1,96 +1,387 @@
-# Merchant Mind
+# Merchant Mind 3.3.1 — Fabric / Minecraft Java 26.1.2
 
-> **Source code only — no issue tracker here. Please report bugs or feature requests via email: [mattrixthai9911@zohomail.com](mailto:mattrixthai9911@zohomail.com)**
+ซอร์สโค้ดเต็มของ `merchantmind-3.3.1+mc26.1.2.jar`
 
-An AI-powered Minecraft shopkeeper mod with a rotating catalog, smart barter trading, and a Charge & Slam combat mechanic. Built entirely with AI assistance in Thailand.
+## รูปแบบเลขเวอร์ชัน (version scheme)
 
----
+ใช้ **SemVer + build metadata ของ Minecraft**:
 
-## Features
+```
+MAJOR.MINOR.PATCH+mc<minecraft_version>
+        3.2.0+mc26.1.2
+```
 
-### The AI Shopkeeper
-A rotating shop with a catalog of items across **11 categories**: Weapon, Armor, Tools, Throwables, Resources, Blocks, Utility, Food, Redstone, Decor, and Rare. Each category has an independent restock timer. When stock runs out or the timer expires, shelves are cleared and refilled with random items from the category pool.
+| ส่วน | เมื่อไหร่ถึงบวก |
+|---|---|
+| MAJOR | เปลี่ยนแล้วของเก่าพัง (format ของ `shop.json` เปลี่ยน, **ย้ายที่เก็บเซฟ**, ลบหมวดหมู่) — ครั้งล่าสุดคือ 2.9.2 → 3.0.0 |
+| MINOR | เพิ่มฟีเจอร์ใหม่ / เพิ่มกฎที่เดิมไม่มี แต่เวิลด์เก่ายังเล่นต่อได้ — ครั้งล่าสุดคือ 3.2.0 → 3.3.0 |
+| PATCH | แก้บั๊ก / แก้ค่าที่ตั้งไว้ไม่สมจริง ไม่มีของใหม่ ← รอบนี้ (3.3.0 → 3.3.1) |
+| `+mc…` | build metadata บอกว่า build กับ MC ตัวไหน ไม่นับตอนเทียบเวอร์ชัน |
 
-### Iron Restock Shortcut
-Restocking takes **2 minutes 30 seconds** (150 ticks). During restock, an optional iron slot opens — submitting **4 Iron Ingots** instantly completes the restock. Iron is never required; it is purely an optional speed-up.
+**อย่าใช้ วัน.เดือน.ปี** (`25.07.2026`) — เหตุผล:
 
-### Per-World Saves
-Shop inventory, restock timers, and player coin balances are saved to `<save>/data/merchantmind_shop.json`. Every world maintains a completely separate economy.
+- Fabric loader อ่าน `depends` เป็น **SemVer** (`>=2.3.0`, `~2.3`, `^2`) ถ้าเป็นวันที่ ช่วงเวอร์ชันจะเพี้ยนทันที
+- `13.01.2026` จะถูกมองว่า *ใหม่กว่า* `02.02.2026` เพราะเทียบเลขตัวแรกก่อน → เรียงลำดับผิด
+- คนเล่นดูเลขแล้วไม่รู้ว่า update นี้แค่แก้บั๊ก หรือทำเซฟเก่าพัง
+- Modrinth / CurseForge จัดการ dependency ด้วย SemVer เหมือนกัน
 
-### Intelligent Trading (Barter)
-The "Trade" tab calculates the true worth of offered items and matches them against shop stock using a deterministic value-matching algorithm with a square-root bundle curve. Leftover value returns as coins.
+ถ้าอยากได้วันที่จริง ๆ ให้ใส่เป็น *ส่วนท้าย* แทน เช่น `3.3.1+mc26.1.2.20260728` ซึ่งไม่กระทบการเทียบเวอร์ชัน
 
-### Smart Selling
-The "Sell" tab applies a **capped bulk bonus of up to +35%** — selling more yields a better per-item rate. Payout is clamped to **70% of true worth** to prevent arbitrage.
+## มีอะไรใหม่ใน 3.3.1
 
-### Charge & Slam Combat
-Hold `V` to charge your weapon. Bonus damage scales up to **+14.0** at full charge (38 ticks / ~1.9 s). A HUD bar above the hotbar shows charge percentage and bonus damage in real time, with a screen-stretch wind-up effect.
+**เอาปุ่มบนหน้าจอหยุดเกม (Pause / ESC) ออก** — ลบทิ้งอย่างเดียว ไม่มีของใหม่ แตะแค่ฝั่ง client
 
-### Combat Tweaks
-- **Arrow Reflect** — Mob arrows reflect back at **3x damage**
-- **Instant Pearl Heal** — Ender Pearl landing grants instant regeneration (6 hearts + Regen III)
-- **Jump Crits** — Small bonus for airborne critical hits on hostile mobs
-- **Mob Suppression** — Skeletons and baby zombies have an **83% spawn cull rate**
-- **Clear Dropped Items** — Press `K` to clear all dropped items
+| | เดิม (3.3.0) | ตอนนี้ |
+|---|---|---|
+| หน้า Pause | ยัดปุ่ม `✦ Open Merchant Shop` ขนาด 204×20 เข้า widget list ของ `PauseScreen` ที่พิกัดตายตัว (กลางจอ สูงจากล่าง 30px) ด้วย `Screens.getWidgets().add()` | **ไม่แตะหน้า Pause เลย** ฮุก `ScreenEvents.AFTER_INIT` ถูกลบทั้งก้อน |
+| วิธีเปิดร้าน | คีย์ (ค่าเริ่มต้น `B`) **หรือ** ปุ่มบนหน้า Pause | คีย์เท่านั้น (เปลี่ยนคีย์ได้ / ปล่อยว่างได้ ในเมนู Controls) |
+| import ที่ใช้ | `ScreenEvents`, `Screens`, `Button`, `PauseScreen` | ลบออกทั้ง 4 ตัว |
 
-### Keybinds (Configurable)
+### ทำไมปุ่มนั้นเป็นบั๊ก ไม่ใช่ฟีเจอร์
 
-| Key | Action |
-|-----|--------|
-| `B` | Open Merchant Shop |
-| `K` | Clear Dropped Items |
-| `V` | Charge & Slam (hold to charge) |
+ปุ่มนั้น**ไม่ได้จองที่ใน layout** ของหน้า Pause มันแค่ถูกวาด**ทับ**ตำแหน่งนั้นเฉย ๆ ผลคือ:
 
----
+- ปุ่มของม็อดอื่นที่อยู่แถบเดียวกัน **ถูกทับหาย** (ไม่ได้ถูกดันไปที่อื่น)
+- การกดคลิกไล่ตาม widget list แล้ว**หยุดที่ตัวแรกที่โดน** → แค่การอยู่ใน list ก็พอที่จะ**กินคลิก**ที่เล็งไปหาปุ่มที่มันทับอยู่
 
-## Version Scheme
+ฟีเจอร์ของม็อดอื่นหายเพราะติดตั้งม็อดนี้ = ข้อเสีย ไม่ใช่ข้อดี → จึงเป็น **PATCH**
+(ไม่ใช่ MINOR เพราะไม่ได้เพิ่มอะไร / ไม่ใช่ MAJOR เพราะไม่มีของเดิมที่ใช้ได้แล้วใช้ไม่ได้)
 
-Merchant Mind follows **Semantic Versioning + build metadata** in the format `MAJOR.MINOR.PATCH+mc<minecraft_version>`.
+### เสียอะไรไปไหม — ไม่
 
-| Component | When to Increment | Notes |
-|-----------|-------------------|-------|
-| **MAJOR** | Breaking change — old saves/configs no longer work | Reset MINOR and PATCH to 0 |
-| **MINOR** | New feature added, everything old still works | Reset PATCH to 0 |
-| **PATCH** | Bug-fix-only, no new features, nothing broken | |
-| **+mc\*** | Minecraft version this build targets | No effect on version comparison |
+คีย์ (`B` โดยค่าเริ่มต้น) ส่ง `OpenShopC2SPayload` ตัวเดียวกันกับที่ปุ่มนั้นส่ง ไม่ได้แตะ packet, handler ฝั่ง server,
+`ShopScreen`, รูปแบบเซฟ หรือนาฬิกา restock ใด ๆ — เหมือน 3.3.0 ทุกไบต์
 
-Only one position is incremented per release, matching the **biggest change**. New features always outrank bug fixes.
+> ตรงที่เคยเป็นโค้ดปุ่ม เขียนคอมเมนต์ทิ้งไว้ว่า**ทำไมจึงไม่มีปุ่มนี้** กันเผลอใส่กลับ ถ้าจะเอาเมนูกลับมาจริง ต้องใช้ layout API
+> ที่จองแถวของตัวเอง ไม่ใช่ยัดเข้า `getWidgets()` ที่พิกัดตายตัว — **ปัญหาไม่ใช่ตำแหน่ง แต่คือการยัด widget ที่ไม่มีใครจัดการเข้าไปในจอที่ใช้ร่วมกัน**
 
----
+## มีอะไรใหม่ใน 3.3.0
 
-## Building
+ตามที่สั่ง: **เปิดร้าน 2 นาที**, **auto restock 30 วิ**, **กดเอง หรือของหมด restock 1 นาที**
+
+| | 3.2.0 | 3.3.0 |
+|---|---|---|
+| เปิด (idle) | 60s | **120s** |
+| AUTO — ครบรอบตามตาราง | 60s | **30s** |
+| SOLD OUT — ซื้อชิ้นสุดท้ายหมดหมวด | 60s (ใช้นาฬิกา auto) | **60s (ย้ายมาใช้นาฬิกาเดียวกับ manual)** |
+| MANUAL — กด ⟳ Restock | 180s | **60s** |
+| เปิด:ปิด (ตอนไม่มีใครแตะ) | 1.00 : 1 | **4.00 : 1** |
+| สัดส่วนเวลาที่ซื้อได้ | 50% | **80%** |
+| ค่าคงที่ | `AUTO_RESTOCK_DURATION_SECONDS` / `MANUAL_RESTOCK_DURATION_SECONDS` | `SCHEDULED_RESTOCK_DURATION_SECONDS` = 30 / `TRIGGERED_RESTOCK_DURATION_SECONDS` = 60 |
+| ตัวเลือกว่าใช้นาฬิกาไหน | `boolean manual` | `RestockReason` (ผ่าน `RestockReason.triggered`) |
+
+### ทำไมเป็น MINOR ไม่ใช่ PATCH
+
+ตัวเลข 3 ตัวเป็นแค่ค่า (PATCH) แต่ข้อที่ 3 **ไม่ใช่ตัวเลข**: `SOLD_OUT` **ย้ายข้าง**
+
+3.1.0 มีสองนาฬิกา แต่เลือกด้วย boolean เดียวว่า "ผู้เล่นกดปุ่มไหม" ทำให้ของหมดหมวดถูกจัดกลุ่มไปกับตารางเวลาของร้าน
+(คอมเมนต์เดิมเขียนไว้ตรง ๆ ว่า *"SOLD_OUT counts as automatic, because no player asked for it"*)
+รอบนี้ปฏิเสธการจัดกลุ่มนั้น — ชั้นวางที่ว่างคือ **ผู้เล่นซื้อจนหมด** = demand ไม่ใช่ร้านปิดตัวเอง
+จึงกลายเป็นกฎที่โมเดลเดิมไม่มี (ของหมด กับ ครบรอบ ใช้เวลาไม่เท่ากันเป็นครั้งแรก) → **MINOR** ด้วยเหตุผลเดียวกับที่ 3.1.0 เป็น MINOR
+
+### ตัวเลือกย้ายไปอยู่บน enum
+
+- `restockDurationSeconds(boolean)` และ `restockDelayLabel(boolean)` **หายไปแล้ว** — รับ `RestockReason` ทั้งคู่
+- คำตอบอยู่ที่ฟิลด์เดียว `RestockReason.triggered` → 3 ที่ที่ต้องตรงกัน (นาฬิกาฝั่ง server, clamp ตอนโหลดเซฟ, หลอด progress ฝั่ง client) อ่านจากฟิลด์เดียวกัน
+- `beginRestock()` ไม่รับ flag `manual` ซ้อนกับ reason อีก (มันคำนวณจาก reason ได้ = เดิมมีโอกาสขัดกันเอง)
+- `RestockEvent` ถือ reason แทน boolean → event ตอน **จบ** ก็รู้ว่าเพิ่งจบนาฬิกาไหน
+
+### ฝั่งจอ
+
+- หลอด progress สเกลด้วย reason (ถ้าใช้ flag เดิม refill ของ sold-out จะถูกวัดกับ 30s แล้วเต็มหลอดตอนผ่านไปครึ่งทาง)
+- หัวจอมีคำที่ 3: **`sold-out restock`** เดิมเรียก sold-out ว่า "auto restock" แต่จับเวลาแบบ manual
+- แท็บ Help อธิบาย **3 ทริกเกอร์ บน 2 นาฬิกา** ในจำนวนบรรทัดเท่าเดิม (7 บรรทัด — แท็บนี้ไม่มี scroll เพิ่มบรรทัดคือบรรทัดหาย)
+
+### packet เปลี่ยนไหม — ไม่
+
+`reason` ใน sync row ส่ง `RestockReason.name()` (เช่น `SOLD_OUT`) แทนประโยคภาษาคน
+ฟิลด์เดิม ชนิดเดิม รูปร่าง row เดิม → **ไม่ใช่ packet ใหม่** ฝั่ง client แปลงกลับเป็นประโยคเดิมด้วย `RestockReason.fromKey().display`
+เหตุผลที่ต้องส่ง key: client ต้องรู้ว่า refill นี้อยู่บนนาฬิกาไหน การ match ประโยคภาษาคนไม่ใช่วิธีที่ควรทำ
+
+### ของเก่าพังไหม — ไม่
+
+ไม่ได้เพิ่ม/ลบ/เปลี่ยนชื่อ field ในเซฟ เซฟ 3.2.0 ที่ค้างตอน refill จะถูก clamp ตามทริกเกอร์ของตัวเอง
+(manual 180 → เหลือไม่เกิน 60, scheduled 60 → ไม่เกิน 30) และถ้าเซฟเก่าไม่มี `restockReason`
+จะถอยไปดู flag `manualRestock` ก่อน แล้วค่อยถอยไป `SCHEDULED` (เพดานสั้นกว่า = ฝั่งที่ปลอดภัย)
+เซฟที่ถือ `nextAutoRestockSeconds` = 60 เดิม จะเดินรอบนั้นให้จบ 1 รอบ แล้วสุ่มใหม่เป็น 120 คงที่
+
+### ไอคอน
+
+`assets/merchantmind/icon.png` แทนด้วยภาพที่ส่งมา (ย่อ 512→256 RGBA, Lanczos) ไม่ใช่วาดจากสคริปต์แล้ว
+ถ้าจะแก้ต่อ ให้แก้จากไฟล์ภาพต้นฉบับ ไม่ใช่ `tools/make_icons.py` (สคริปต์นั้นยังใช้กับไอคอนใน GUI ได้ตามเดิม)
+
+### ทดสอบแล้ว
+
+build จริงด้วย `./gradlew build` (JDK 25 / Loom 1.17.17 / MC 26.1.2) ได้ `merchantmind-3.3.0+mc26.1.2.jar` คอมไพล์ผ่าน ไม่มี error
+
+harness 2 ตัวใน `.bcode/agent-workspace/` รันกับคลาสที่คอมไพล์แล้วจริง **67 ข้อ ผ่านหมด**:
+
+- `RestockHarness` (31 ข้อ) — ค่าคงที่, mapping ทริกเกอร์→เวลา (`SOLD_OUT` เท่ากับ `MANUAL` และไม่เท่ากับ `SCHEDULED`), label (`30s` / `1m` / `2m`), `fromKey()` รวมกรณี null / ค่าว่าง / ประโยคเก่า, `rollAutoInterval()` = 120 เป๊ะทุกครั้งใน 500 ครั้ง, `rollFirstAutoInterval()` อยู่ใน 1..120 และกระจาย 120 ค่าต่าง
+- `StateHarness` (36 ข้อ) — เดินสเตตแมชชีนจริงทั้ง 3 ทาง: กดปุ่ม = 60s, ครบรอบ = 30s แล้วจบพอดีที่ tick 30 พร้อม event ที่ถือ reason, ซื้อ 6 ชิ้นจนหมดหมวด = **60s ไม่ใช่ 30s** และไม่ถูกรายงานว่า manual, บวก clamp ตอนโหลดเซฟทั้ง 6 กรณี
+
+## มีอะไรใหม่ใน 3.2.0
+
+สามเรื่อง: **แอนิเมชันเยอะขึ้นมาก**, เหล็กลดเหลือ **2**, และรอบ auto เป็น **1 นาที เปิด / 1 นาที ปิด**
+
+### 1. แอนิเมชัน (คือเหตุผลที่เป็น MINOR)
+
+ไฟล์ใหม่ `client/ShopFx.java` — กล่องเครื่องมือ FX ที่เป็น **static ล้วน ไม่มี state** สร้างจาก `fill()` กับ `text()` เท่านั้น ไม่แตะ menu / packet / container เลย จึงทำให้ desync ไม่ได้
+
+| ที่ | ได้อะไรใหม่ |
+|---|---|
+| **หัวจอ** | คลื่นแสงกวาด, ชื่อร้าน shimmer, เส้นใต้กวาดตอนเปิด, และ **ตัวเลขเหรียญที่เปลี่ยน (+/−) ลอยขึ้นแล้วจาง** — บอกว่า "เพิ่งเสียไปเท่าไหร่" ไม่ใช่แค่ "เหลือเท่าไหร่" |
+| **แถบข้าง** | แท็บที่เลือกหายใจ + คลื่นแสง, hover มีคลื่น, ไอคอนเด้งและเอียง, ตัวชี้แท็บมีหางลาก |
+| **แถวของขาย** | คลื่น idle เบา ๆ เยื้องเฟสคนละแถว, hover ขอบทอง, ไอคอนของเด้ง, ราคา shimmer |
+| **แผง restock** | พื้นไล่เฉด, scanline, สะเก็ดไฟลอย, วงโคจร 2 วงหมุนสวนกัน, เด้ง+ระเบิดทุก 1 วินาที, หลอด progress ใหม่สูง 7px มีลายวิ่ง + หัวหลอดเรืองแสง |
+| **ปุ่มหลัก** | มีไฟวิ่งรอบขอบ **เฉพาะตอนกดได้** (เดิมตอนกดไม่ได้แค่หม่นลง คนอ่านผิดบ่อย) |
+| **Trade / Sell** | ลูกศรขยับเข้าหาผลลัพธ์, ของที่ AI อนุมัติเด้ง+มีวงแหวน+ประกาย, `thinking…` จุดวิ่งจริง (server ช้า = ดูว่ากำลังทำงาน ไม่ใช่ค้าง) |
+| **แผงว่าง** | ไอคอนหมุน และตอนยัง**รอ sync ครั้งแรก** มีวงโคจร + จุดวิ่ง → "กำลังโหลด" กับ "ของหมด" ไม่หน้าตาเหมือนกันอีก |
+
+สองอันนี้ไม่ใช่แค่ความสวย มันตอบคำถามที่ UI เดิมไม่ตอบ:
+
+- **restock เสร็จ = เสียงดัง** แฟลชขาว + คลื่นกระแทก 3 วง + ประกายพุ่ง + `READY!` เด้งเกิน เพราะช่วง refill คือ 1 นาทีที่ผู้เล่นไปทำอย่างอื่น หางของเอฟเฟกต์ต้องยังอยู่บนจอตอนหันกลับมา จับจังหวะจาก flag `restocking` ของ server ที่เปลี่ยนเป็น false เอง (จับคู่กับแท็บด้วย สลับแท็บจึงไม่ทำให้เด้ง) — **ไม่มี packet ใหม่**
+- **คลิกช่องที่กดไม่ได้ = มีระลอกสีปฏิเสธ** เดิม `slotClicked` กลืนคลิกทิ้งเงียบ ๆ ซึ่งหน้าตาเหมือนเกมค้าง
+
+เรื่องประสิทธิภาพ: one-shot ทุกตัวขับด้วยฟังก์ชันเดียว (`age()`) ที่แปลง `animTicks` ที่บันทึกไว้เป็น "ผ่านมากี่ tick" เอฟเฟกต์ที่ไม่ถูกจุดคือ **ลบ 1 ครั้ง เทียบ 1 ครั้ง** จบ ส่วนอนุภาคเป็น pool ขนาดคงที่ 72 ช่อง (float array ขนาน) ตัวตายคือ `life <= 0` ตัวใหม่ทับตัวที่แก่สุด → ซื้อ 40 ครั้งใน 2 วินาที alloc **เท่ากับไม่ซื้อเลย คือศูนย์**
+
+### 2. เหล็กลดเหลือ 2
+
+`RESTOCK_IRON_COST` 4 → **2** แก้ค่าคงที่ตัวเดียว ไม่มีที่ไหน hardcode เลข 4 ไว้ ทั้งข้อความแชท, แท็บ Help และการเช็กช่องจึงตามให้เอง (มีคอมเมนต์ค้าง 2 จุดที่เขียนว่า "4 iron" แก้ให้อ้างชื่อค่าคงที่แล้ว)
+
+### 3. รอบ auto = 1 นาที เปิด / 1 นาที ปิด — **และร้านเปิดน้อยลงกว่า 3.1.0**
+
+`AUTO_RESTOCK_MIN_SECONDS` 150 → **60**, `AUTO_RESTOCK_SPREAD_SECONDS` 90 → **0**
+
+| | 3.0.4 | 3.1.0 | 3.2.0 |
+|---|---|---|---|
+| เปิด (idle) | 150–240s | 150–240s | **60s เป๊ะ** |
+| ปิด (refill auto) | 150s | 60s | 60s |
+| เปิด:ปิด | 1.00 / 1.30 / 1.60 : 1 | 2.50 / 3.25 / 4.00 : 1 | **1.00 : 1** |
+| สัดส่วนเวลาที่ซื้อได้ | ~56.5% | ~76.5% | **50%** |
+
+บอกตรง ๆ: นี่คือผลโดยตรงของการสั่งให้รอบเป็น 1 นาที ไม่ใช่ผลข้างเคียงที่หลุดมา ร้าน**เปิดน้อยลง**กว่า 3.1.0
+
+**การกระจายรอบย้ายที่:** spread = 0 ทำให้ 5 หมวดที่เปิดพร้อมกันจะ refill พร้อมกันตลอดไป จึงเพิ่ม `rollFirstAutoInterval()` สุ่ม 1..60 ให้ **รอบแรกเท่านั้น** — รอบคงที่รักษาความเยื้องได้ตลอดแต่สร้างเองไม่ได้ ดังนั้นสุ่มครั้งเดียวตอนเริ่มก็พอ ใช้ใน 3 จุดที่หมวดหนึ่งจะได้ตารางเวลามา: `openWorld` (เฉพาะตอนยังไม่มีของตัวเอง), ตัวกัน idle ใน `tickOncePerSecond`, และ `load()` ตอน field หายจากเซฟเก่า
+
+### ⚠️ MANUAL ยังเป็น 3 นาที — ยังไม่ได้แก้
+
+> **แก้แล้วใน 3.3.0**: manual เป็น 1 นาที และของหมดหมวดก็ 1 นาทีเหมือนกัน ดูหัวข้อ 3.3.0 ด้านบน
+
+"restock 1 นาที" ถูกตีความว่าหมายถึง**รอบ auto** เพราะคู่ 1m/1m คือรอบนั้น ถ้าที่ต้องการคือให้**กด ⟳ Restock แล้วเสร็จใน 1 นาทีด้วย** อันนั้นแก้ค่าคงที่ตัวเดียว (`MANUAL_RESTOCK_DURATION_SECONDS = 180` → `60`)
+
+### ของเก่าพังไหม — ไม่
+
+ไม่ได้เพิ่ม/ลบ/เปลี่ยนชื่อ field ในเซฟ ไม่แตะ packet และไม่มีสัญญา client/server ใหม่ (client 3.0.x/3.1.0 คุยกับ server 3.2.0 ได้) เซฟ 3.1.0 ที่ถือ `nextAutoRestockSeconds` จากช่วง 150–240 เดิม จะเดินรอบยาวนั้นให้จบ 1 รอบ แล้วสุ่มใหม่เข้าช่วง 60 คงที่
+
+### ทดสอบแล้ว
+
+`RestockHarness` (`.bcode/agent-workspace/`) ขยายเป็น **42 ข้อ ผ่านหมด** ของใหม่รอบนี้: เหล็ก = 2, `rollAutoInterval()` สุ่ม 500 ครั้งได้ 60 ทุกครั้ง (min = max), `rollFirstAutoInterval()` อยู่ในช่วง 1..60 และ**กระจายจริง** (>20 ค่าต่าง), `autoIntervalLabel()` = `1m`, และ `load()` ที่ไม่มี field ให้ค่าในช่วง 1..60
+
+## มีอะไรใหม่ใน 3.1.0
+
+เวลา restock **แยกเป็นสองค่า** ตามว่าใครเป็นคนเริ่ม ตามที่สั่ง
+
+| | 3.0.4 | 3.1.0 |
+|---|---|---|
+| **AUTO** (ร้าน restock เอง: ครบรอบ หรือของหมดหมวด) | 2m 30s | **1m** |
+| **MANUAL** (คนกด ⟳ Restock) | 2m 30s | **3m** |
+| ค่าคงที่ | `RESTOCK_DELAY_SECONDS = 150` ค่าเดียว | `AUTO_RESTOCK_DURATION_SECONDS = 60` + `MANUAL_RESTOCK_DURATION_SECONDS = 180` |
+| ใครเลือกว่าใช้ค่าไหน | — | `restockDurationSeconds(manual)` **ที่เดียว** — `beginRestock()`, clamp ตอนโหลดเซฟ และหลอด progress ฝั่ง client เรียกตัวนี้ทั้งหมด |
+| 4 เหล็กข้าม | เหมือนเดิม | เหมือนเดิม แต่**คุ้มขึ้น** เพราะไปตัดของยาว (3m) |
+
+### ทำไม manual ถึง**นานกว่า** auto (ไม่ได้สลับเลข)
+
+- **auto** คือร้าน "ทำใส่" ผู้เล่น ไม่ได้ขอ ไม่รู้ล่วงหน้า และล็อกการซื้อระหว่างนั้น → ควรจบเร็ว **1 นาที**
+- **manual** คือผู้เล่น "เลือก" ทิ้งของบนชั้นแล้วสุ่มใหม่ = **reroll** ถ้า reroll ฟรีและไม่นานกว่าการรอ มันก็คือตู้สุ่มฟรี → คิดราคาเป็น **3 นาที** ทางออกคือ 4 เหล็ก
+- ผลรวม: กด Restock รัว ๆ จนของบนชั้นถูกใจ ไม่ใช่วิธีเล่นที่ได้เปรียบอีกแล้ว
+
+### ผลข้างเคียงที่ต้องบอก: ร้านเปิดนานขึ้นเยอะ
+
+`AUTO_RESTOCK_MIN/SPREAD` **คงไว้ที่ 150/90 โดยตั้งใจ** (คอมเมนต์เดิมในไฟล์สั่งให้ขยับตามทุกครั้งที่เวลา refill เปลี่ยน — รอบนี้จงใจไม่ทำ)
+
+| | 3.0.4 | 3.1.0 |
+|---|---|---|
+| เปิด (idle) | 150–240s | 150–240s (เท่าเดิม) |
+| ปิด (refill auto) | 150s | **60s** |
+| เปิด:ปิด | 1.00 / 1.30 / 1.60 : 1 | **2.50 / 3.25 / 4.00 : 1** |
+| สัดส่วนเวลาที่ซื้อได้ | ~56.5% | **~76.5%** |
+
+ถ้าจะรักษาสัดส่วนเดิมต้องใช้ `60/36` ซึ่งแปลว่าร้านจะปิดตัวเองทุก 1 นาที = ย้อนสิ่งที่สั่งมา จึงไม่ทำ **ถ้าอยากได้สัดส่วนเดิมคืน บอกได้ เลขคือ 60/36**
+
+### ของเก่าพังไหม — ไม่
+
+ไม่ได้เพิ่ม/ลบ/เปลี่ยนชื่อ field ในเซฟ และ**ไม่ได้แตะ packet เลย** (client 3.0.x กับ server 3.1.0 คุยกันได้) เซฟที่ค้างตอน refill จะถูก clamp ตามโหมดของตัวเอง — ของ auto ที่เคยเหลือ 150s จะเหลือไม่เกิน 60s
+
+## มีอะไรใหม่ใน 3.0.4
+
+แก้ไอคอนอย่างเดียว ยึดหน้าตาของ 3.0.1 เป็นหลัก แล้วขยับให้ลูกศรไม่ทับกัน
+
+| เรื่อง | 3.0.3 | 3.0.4 |
+|---|---|---|
+| **หัวลูกศรเบี้ยว** | สร้างหัวจาก**เส้นสัมผัส** ทำให้จุดกึ่งกลางฐานลอยออกนอกวง `sqrt(r²+L²)-r` = **36px** ฐานเลยไม่ตรงกับปลายตัวเส้น มองเห็นเป็นหักมุม | ฐานตั้งฉากกับ**คอร์ดของหัวลูกศรเอง** ปลายหัวและกึ่งกลางฐานอยู่บนวงทั้งคู่ → ตรงแล้ว |
+| **ขนาด** | เส้นหนา 0.078 | เส้นหนา **0.098** ฐานหัว **1.70×** ของความหนา ยาว **2.20×** |
+| **เม็ดกลมที่ปลาย** | มี (round cap) | **เอาออก** ปลายทั้งสองข้างเป็นรอยตัดตามแนวรัศมี และตัวเส้นสอดใต้หัวลูกศร 35% กันรอยบาก |
+| **ชนกันไหม** | ห่างกัน | เส้นละ 180° รวม 360° พอดี ปลายหัวแตะรอยตัดหางของอีกเส้น — สแกนพิกเซลรอบวงแล้ว **มีรอยต่อสีเดียวที่จุดละ 1 รอย** คือชนกันจริง ไม่ทับ |
+
+> เม็ดกลม 3 จุด (neural) ยัง**ไม่ได้ใส่กลับ** ตามที่เคยสั่งให้เอาออก ถึงแม้ในรูปอ้างอิงจะยังมีอยู่ — ถ้าอยากได้กลับมาบอกได้ครับ
+
+## มีอะไรใหม่ใน 3.0.3
+
+แก้ไอคอนอย่างเดียว ไม่แตะโค้ด — **ย้อนสิ่งที่ 3.0.2 ทำเกินไป** กลับไปหาหน้าตาเดิมของ 3.0.1
+
+| เรื่อง | 3.0.2 ทำผิดไว้ | 3.0.3 |
+|---|---|---|
+| ความยาวลูกศร | ตัดจาก ~300° เหลือ **110°** ต่อเส้น หายทับก็จริงแต่วงโหวงและลูกศรดูเล็กลง | เต็มวงเหมือนเดิม เส้นละ **180°** รวมกันพอดี 360° |
+| จุดที่สองเส้นเจอกัน | เว้นช่องห่าง | **ปลายหัวลูกศรแตะขอบหางของอีกเส้นพอดี** วัดได้ 39.5px เท่ากับรัศมีหางเป๊ะ — ชนกัน ไม่ทับ |
+| รอยต่อหัวลูกศร | — | เอา round cap ที่ปลายด้านหัวออก เพราะมันปูดพ้นฐานลูกศรจนดูเป็นตุ่ม |
+| ทรงหัวลูกศร | ป้อม ๆ | ยาวขึ้น (2.15 เท่าของความกว้าง เดิม 1.55) และเรียวลง (0.92 เดิม 1.30) |
+| เม็ดกลม 3 จุด | มี | **เอาออก** ย่อเหลือ 32px ก็ไม่เหลืออะไรอยู่แล้ว แถมแย่งที่บนวง |
+| เหรียญ | ย่อเหลือ 0.218 + ไล่เฉดต่อเนื่อง → ออกมาคล้ำและส้มกว่าเดิม | กลับเป็น **0.262 + สามแถบสีแบน** `ffe8a8` / `ffce68` / `c6922e` เยื้องขึ้นซ้ายแบบเดิม ดาวกลับเป็น 0.163 |
+
+| เรื่อง | เดิม (3.0.1) | ตอนนี้ |
+|---|---|---|
+| `assets/merchantmind/icon.png` | เส้นโค้งลูกศรสองเส้นกวาดเกือบ 300° ทั้งคู่ → **วิ่งทับกันเอง** และหัวลูกศรทั้งสองอันไปตกบนเส้นของอีกฝั่ง ส่วนกลุ่มจุด neural ก็ทับเส้นสีฟ้า | เส้นละ **110°** เว้นช่อง 40° ทางทิศตะวันตกเฉียงเหนือ และ 100° ทางตะวันออกเฉียงใต้ กลุ่มจุด neural อยู่ในช่องนั้นพอดี ไม่มีหัวลูกศรชี้ใส่ |
+| อ่านออกตอนย่อ | เหรียญใหญ่จนวงลูกศรเบียด ที่ 32px เละเป็นก้อน | เหรียญเล็กลง (0.255 → 0.218 ของด้าน) เส้นหนาขึ้น (0.055 → 0.070) ที่ **32px** ซึ่งเป็นขนาดที่ลิสต์ม็อดของ Fabric วาดจริง ยังเห็นเป็นวงลูกศรชัด |
+
+ขนาดและพาเลตเดิมทุกอย่าง (256×256 RGBA) สคริปต์ที่ใช้วาดเก็บไว้ที่ `.bcode/agent-workspace/make_merchantmind_icon.py` แก้แล้วรันใหม่ได้
+
+## มีอะไรใหม่ใน 3.0.1
+
+แก้บั๊ก "เทรดแล้วได้ของกลับมาเยอะเกินจริง" สองข้อ ไม่มีฟีเจอร์ใหม่ เซฟเก่าและ client 3.0.0 ใช้ต่อได้ปกติ
+
+| เรื่อง | เดิม (3.0.0) | ตอนนี้ |
+|---|---|---|
+| **อาวุธ/ของ stack ไม่ได้** | คิดจำนวนจาก `budget / unitWorth` เฉย ๆ → เพชร 20 เม็ด (1600c) แลกดาบเพชรได้ **9 เล่มในช่องเดียว** ทั้งที่ vanilla stack ได้ 1 | ได้ **1 ชิ้นเสมอ** — เซิร์ฟเวอร์ส่ง `getDefaultMaxStackSize()` จริงของแต่ละไอเทมให้ตัวคิดราคา + เช็ค `isWeapon()` จากชื่อไอเทมซ้ำอีกชั้น + clamp ตอนจ่ายจริงอีกชั้น |
+| **จำนวนของ bundle** | จำกัดแค่ `MAX_RETURN_QTY = 64` มูลค่าที่ใส่เข้าไปไม่เคยเป็นตัวจำกัด → เพชร 40 เม็ดเล็งธนูได้ **64 คัน**, เพชร 20 เม็ดเล็งลูกธนูได้ **64 ดอก** | เพดานผูกกับ**มูลค่ารวมที่ใส่เข้าไป**: `sqrt(worth / 4)` → 64c ได้ 4, 256c ได้ 8, 1600c ได้ 20, เต็ม stack ต้องเกิน 16384c (~205 เพชร) |
+| ตอนมูลค่าสูงแต่ไปกว้างไม่ได้ | — | เพดานถูกใช้**ตอนให้คะแนนแต่ละตัวเลือก** ไม่ใช่ตัดตอนท้าย → ระบบขยับไปหาของแพงกว่าแทนที่จะกองของถูก |
+| มูลค่าที่ถูกเพดานตัด | — | **ไม่หาย** คืนเป็นเหรียญผ่านระบบ change เดิม เรตยังเป็น 0.9 เท่าเดิม |
+
+ผลทดสอบบน dedicated server จริง (MC 26.1.2, ร้านเดียวกัน 66 รายการ, 18 รายการ stack ไม่ได้):
+
+| ใส่เข้าไป | มูลค่า | เพดาน | ได้ไอเทม | 3.0.0 | 3.0.1 |
+|---|---|---|---|---|---|
+| diamond 20 — เลือกดาบเพชร | 1600c | 20 | `diamond_sword` | 9x | **1x** |
+| diamond 40 — เลือกธนู | 3200c | 28 | `bow` | 64x | **1x** |
+| diamond 20 — เลือกลูกธนู | 1600c | 20 | `arrow` | 64x | **20x** |
+| diamond 20 — ให้ระบบเลือก | 1600c | 20 | `iron_block` | 16x | 16x |
+| oak_log 64 — ให้ระบบเลือก | 256c | 8 | `amethyst_cluster` | 8x | 8x |
+| oak_planks 64 — ให้ระบบเลือก | 64c | 4 | `chiseled_bookshelf` | 4x | 4x |
+| stick 1 — ให้ระบบเลือก | 1c | 1 | `torch` | 1x | 1x |
+
+> **ข้อสังเกตที่วัดได้จริง**: ตอนปล่อยให้ระบบเลือกไอเทมเอง จำนวน**ไม่เปลี่ยนเลย** เพราะตัวให้คะแนนดูมูลค่าอยู่แล้ว
+> จำนวนที่มันเลือกจึงอยู่ใต้เพดานใหม่มาตั้งแต่แรก สิ่งที่ 3.0.1 แก้จริง ๆ คือตอนผู้เล่น**เจาะจงไอเทมเอง**
+> ซึ่งเป็นทางเดียวที่เคยทะลุไปเป็น 9 ดาบ หรือ 64 ธนู
+
+## มีอะไรใหม่ใน 3.0.0
+
+| เรื่อง | เดิม (2.9.2) | ตอนนี้ |
+|---|---|---|
+| **ที่เก็บเซฟร้าน** | `config/merchantmind_shop.json` — **ไฟล์เดียว ทุกโลกใช้ร่วมกัน** ซื้อของในโลก A กระทบร้านในโลก B, ลบโลกทิ้งพังข้ามโลก | `<save>/data/merchantmind_shop.json` — **แยกต่อโลก** ไปกับโลกเวลา copy/rename/ลบ ⚠️ นี่คือเหตุผลที่ขึ้น MAJOR |
+| ไฟล์เก่าที่มีอยู่ | — | โลก**แรก**ที่เปิดหลังอัปเดตจะรับไฟล์เก่าไปใช้ แล้วเปลี่ยนชื่อเป็น `.imported` โลกอื่นเริ่มใหม่สะอาด |
+| UI ชาร์จ Slam | ข้อความ action bar `[███░░░] 62% ⚡ +5.4` ทับกับข้อความอื่นได้ ละเอียดแค่ 10 ขั้น | **HUD กราฟิกวาดเอง** เหนือ hotbar: หลอดชาร์จ 182px + ขีดบอก 25/50/75% + หลอดดาเมจโบนัสสีแดงใต้หลอดหลัก + ขอบกะพริบตอนเต็ม |
+| หลอดหายเมื่อไหร่ | — | ปล่อยปุ่ม หรือ**ตอนโจมตีออกไป** (แพ็กเก็ต `slam_consumed` ใหม่ บอก client ว่าเซิร์ฟเวอร์กินชาร์จไปแล้ว) |
+| Restock ตอนไม่จ่ายเหล็ก | 300 วิ (5 นาที) | **150 วิ (2 นาที 30)** — ครึ่งเดียวของเดิม แต่ยังเป็น 2 เท่าของ 75 วิที่พิสูจน์แล้วว่าสั้นเกินจนเหล็กไร้ค่า |
+| รอบ auto restock | 5–8 นาที | **2m30–4m** (MIN 150 / SPREAD 90) — ย่อด้วยตัวคูณเดียวกัน สัดส่วนเปิด:ปิด **เท่าเดิมเป๊ะ** 1.00:1 (แย่สุด) / 1.30:1 (เฉลี่ย) / 1.60:1 (ดีสุด) |
+
+> ⚠️ **ก่อนอัปเดต**: ถ้าเคยเล่นหลายโลกด้วย mod นี้ ร้าน/เงินก้อนเดิมเป็นของ**กลาง** พออัปเดตแล้วจะตกเป็นของโลกแรกที่เปิดเท่านั้น โลกอื่นเริ่มร้านใหม่หมด
+
+## ต้องมีอะไรบ้าง
+
+| อย่าง | เวอร์ชัน | หมายเหตุ |
+|---|---|---|
+| JDK | **25** | ต้อง 25 ขึ้นไป (MC 26.1.2 คอมไพล์ที่ release 25) |
+| Gradle | 9.6.1 | ไม่ต้องลงเอง มี wrapper ให้แล้ว |
+| Fabric Loom | 1.17.17 | โหลดอัตโนมัติตอน build |
+| อินเทอร์เน็ต | ต้องมี | รอบแรกต้องโหลด Minecraft + Fabric API |
+
+## Build
 
 ```bash
-./gradlew build
+./gradlew build          # Linux / macOS
+gradlew.bat build        # Windows
+```
+
+ไฟล์ออกที่ `build/libs/merchantmind-3.3.1+mc26.1.2.jar` (ตัว `-sources.jar` ข้างๆ ไม่ต้องเอาไปลง)
+
+รอบแรกจะนานหน่อย (โหลด MC + decompile) รอบถัดไปไม่กี่วินาที
+
+## เล่นทดสอบ
+
+```bash
 ./gradlew runClient
 ./gradlew runServer
 ```
 
-**Important notes:**
-- Minecraft 26.1.2 does not use obfuscation mappings — do **not** add `mappings loom.officialMojangMappings()` to `build.gradle`
-- Do not build on a network drive (NFS/SMB) — Gradle needs file locks
-- Use `implementation`, not `modImplementation` — the no-remap mode has no such configuration
+## 2 เรื่องที่ทำให้ build พัง ถ้าไม่รู้ไว้ก่อน
 
----
+**1. ห้ามใส่ mappings** — MC 26.1.2 ปล่อยมาแบบ **ไม่ obfuscate แล้ว** ถ้าเติม
+`mappings loom.officialMojangMappings()` ลง `build.gradle` จะเจอ
 
-## Technical Details
+```
+Failed to find official mojang mappings for 26.1.2
+```
 
-| | |
-|---|---|
-| **Mod Loader** | Fabric |
-| **Minecraft** | 26.1.2 |
-| **Dependencies** | Fabric API, Fabric Loader (>= 0.19.3) |
-| **External Libraries** | None — Fabric API is the only dependency |
-| **License** | MIT |
+เพราะ Mojang ไม่ได้ปล่อยไฟล์ mappings สำหรับเวอร์ชันนี้ (ไม่จำเป็นแล้ว)
+ด้วยเหตุผลเดียวกันจึงใช้ `implementation` ไม่ใช่ `modImplementation` — โหมด no-remap ไม่มี configuration ตัวนั้น
 
----
+**2. อย่า build บนไดรฟ์เครือข่าย** (NFS / SMB / โฟลเดอร์แชร์) — Gradle ต้องใช้ file lock ถ้าล็อกไม่ได้จะเจอ
 
-## Contact
+```
+java.io.IOException: No locks available
+```
 
-Found a bug? Want a feature? Have an idea? Email me at **mattrixthai9911@zohomail.com** — I will review it and decide whether to add it.
+ให้ย้ายโปรเจกต์ไปไว้บนดิสก์เครื่องตัวเอง
 
-This repository contains source code only. There is no issue tracker here.
+## โครงสร้างโค้ด
 
----
+```
+src/main/java/com/merchantmind/
+├── MerchantMind.java          ฝั่งเซิร์ฟเวอร์: ฮีลตอน pearl หาย, คืน pearl/wind charge ทุก tick,
+│                          ล้างของตกพื้น, โบนัสกระโดดคริ, Charge & Slam, restock, ซื้อ/ขาย
+├── MerchantMindClient.java    keybind (B / K / V), ซูมจอตอนชาร์จ, แถบชาร์จ, ส่ง packet
+│                          (ตั้งแต่ 3.3.1 ไม่แตะหน้า Pause แล้ว — ห้ามใส่ปุ่มกลับไป)
+├── network/ShopPackets.java   payload ทั้งหมดที่วิ่งระหว่าง client กับ server
+├── client/SlamChargeHud.java  หลอดชาร์จ Slam แบบกราฟิก เหนือ hotbar (3.0.0)
+├── shop/ShopManager.java      หมวดหมู่ + pool ของขาย + ราคา + restock + เซฟลงโฟลเดอร์ของโลก
+├── shop/ShopMenu.java         ช่อง trade/sell/เหล็ก + ตรรกะคลิกซ้าย-ขวา
+├── shop/ShopScreen.java       หน้า UI ทั้งหมด (แถบซ้าย, catalog, trade, sell, help)
+├── shop/ShopRegistry.java     ลงทะเบียน MenuType
+└── ai/                        โครงข่ายประสาทเล็กๆ สำหรับที่ปรึกษาการเทรด/ตีราคา
 
-*This mod was made in Thailand with the assistance of AI tools.*
+tools/make_icons.py        สคริปต์ Pillow ที่วาดไอคอนทุกอันในม็อด
+```
+
+## วาดไอคอนใหม่
+
+ไอคอนทุกอันเกิดจากโค้ด ไม่ได้วาดมือ แก้ที่ `tools/make_icons.py` แล้วสั่ง
+
+```bash
+pip install pillow
+python3 tools/make_icons.py
+```
+
+จะเขียนทับ `src/main/resources/assets/merchantmind/textures/gui/icon/*.png`,
+`restock_center.png` และไอคอนม็อด 256×256
+
+## จุดที่ควรรู้ก่อนแก้โค้ด
+
+- **เซฟร้านอยู่ที่ `<save>/data/merchantmind_shop.json`** (ตั้งแต่ 3.0.0) — path ผูกใน
+  `ShopManager.openWorld()` ตอน `SERVER_STARTING` และล้างหน่วยความจำใน `closeWorld()` ตอน
+  `SERVER_STOPPING` **ห้ามเอา path กลับไปไว้ที่ `getConfigDir()`** ไม่งั้นทุกโลกจะใช้ร้านร่วมกันอีก
+- **เวลา restock มีสองค่า ไม่ใช่ค่าเดียว** (ตั้งแต่ 3.1.0) — `SCHEDULED_RESTOCK_DURATION_SECONDS` (30)
+  กับ `TRIGGERED_RESTOCK_DURATION_SECONDS` (60) และ **ห้ามอ่านค่าคงที่ตรง ๆ** ให้เรียก
+  `ShopManager.restockDurationSeconds(reason)` เสมอ ไม่งั้นหลอด progress หรือ clamp ตอนโหลดเซฟ
+  จะใช้เลขของอีกโหมด ป้ายข้อความก็เหมือนกัน ใช้ `restockDelayLabel(reason)` (ไม่มีเวอร์ชันไม่รับ
+  argument แล้ว โดยตั้งใจ)
+- **ตัวเลือกคือ `RestockReason` ไม่ใช่ boolean** (ตั้งแต่ 3.3.0) — **ของหมดหมวด (`SOLD_OUT`) ใช้
+  นาฬิกาเดียวกับ `MANUAL`** (เปลี่ยนจาก 3.2.0 ที่นับเป็น auto) คำตอบอยู่ที่ `RestockReason.triggered`
+  ที่เดียว ถ้าจะเพิ่มทริกเกอร์ใหม่ **ต้องตั้ง `triggered` ให้ถูก** แล้วทุกอย่างตามให้เอง
+  ส่วน `manualRestock` (ในเซฟและใน packet) เหลือไว้เพื่อความเข้ากันได้และการแสดงผลเท่านั้น
+  **ห้ามเอากลับมาใช้เลือกเวลา**
+- **หมวด `THROWABLES`** เดิมชื่อ `COMBAT` — `ShopManager.Category.legacyKey()` มีไว้ให้เวิลด์เก่า
+  ที่เซฟคีย์ `"COMBAT"` ใน `shop.json` ยังโหลดของเดิมได้ ถ้าจะเปลี่ยนชื่อหมวดอีก **ต้องเติม legacy key ด้วยทุกครั้ง**
+  ไม่งั้นของในหมวดนั้นของเวิลด์เก่าหายหมด
+- **ดาเมจโบนัส** ใช้ `ServerLivingEntityEvents.AFTER_DAMAGE` แล้วตี `hurtServer()` ซ้ำ
+  โดยเซ็ต `invulnerableTime = 0` ก่อน มีธง `applyingBonusDamage` กัน recursion — ไม่ต้องใช้ mixin
+- **เวลาชาร์จ Slam นับที่ฝั่งเซิร์ฟเวอร์** client ส่งแค่ปุ่มกด/ปล่อย ดาเมจจึงผูกกับเวลาค้างจริง โกงไม่ได้
+- **ช่องเหล็กแยกคนละ container ต่อหมวด** (`ShopMenu.IRON_START + category.ordinal()`) อย่าเอากลับไปใช้ช่องร่วม
