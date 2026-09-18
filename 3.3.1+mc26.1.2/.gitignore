@@ -1,0 +1,13 @@
+# Gradle
+build/
+.gradle/
+
+# Written by Minecraft's Bootstrap, which the RestockHarness has to call before it can
+# touch ShopManager. Run output, not source.
+logs/
+run/
+
+# IDE
+.idea/
+*.iml
+.vscode/

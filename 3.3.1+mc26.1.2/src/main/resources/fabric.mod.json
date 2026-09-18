@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "merchantmind",
+  "version": "${version}",
+  "name": "Merchant Mind",
+  "description": "An AI shopkeeper for Minecraft: two neural nets appraise your goods and approve every trade. Per-category catalogs with their own iron restock slot and submit button, progressive trade/sell slots, full-stack custom slot handling, instant ender-pearl heal, charge-and-slam keybind, jump-crit bonus and a dropped-item cleaner.",
+  "authors": ["You"],
+  "license": "MIT",
+  "icon": "assets/merchantmind/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.merchantmind.MerchantMind"],
+    "client": ["com.merchantmind.MerchantMindClient"]
+  },
+  "mixins": [],
+  "accessWidener": "merchantmind.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.1.2",
+    "fabric-api": ">=0.155.2"
+  },
+  "suggests": {
+    "cinematic_respawn": "*"
+  }
+}
