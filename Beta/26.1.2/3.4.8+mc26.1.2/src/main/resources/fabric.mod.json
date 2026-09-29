@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "merchantmind",
+  "version": "${version}",
+  "name": "Merchant Mind",
+  "description": "AI shopkeeper with Buy and Reserve actions, existing Trade, Sell, and three-mode Restock systems, and gameplay-only HUD effects.",
+  "authors": [
+    "You"
+  ],
+  "license": "MIT",
+  "icon": "assets/merchantmind/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.merchantmind.MerchantMind"
+    ],
+    "client": [
+      "com.merchantmind.MerchantMindClient"
+    ]
+  },
+  "mixins": [],
+  "accessWidener": "merchantmind.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.1.2",
+    "fabric-api": ">=0.155.2"
+  },
+  "suggests": {
+    "cinematic_respawn": "*"
+  }
+}
